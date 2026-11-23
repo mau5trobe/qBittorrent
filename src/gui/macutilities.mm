@@ -35,10 +35,12 @@
 #include <objc/message.h>
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QMenu>
 #include <QPixmap>
 #include <QSize>
 #include <QString>
+#include <QWidget>
 
 #include "base/logger.h"
 #include "base/path.h"
@@ -192,6 +194,23 @@ namespace MacUtils
     void setBadgeLabelText(const QString &text)
     {
         NSApp.dockTile.badgeLabel = text.toNSString();
+    }
+
+    bool exitFullScreen(QWidget &widget)
+    {
+        if (QGuiApplication::platformName() != u"cocoa")
+            return false;
+
+        NSView *view = reinterpret_cast<NSView *>(widget.winId());
+        NSWindow *window = view.window;
+        if (!window)
+            return false;
+
+        // If Cocoa is already leaving full screen, just wait for Qt's state change.
+        if (window.styleMask & NSWindowStyleMaskFullScreen)
+            [window toggleFullScreen:nil];
+
+        return true;
     }
 
     void setupWindowMenu(QMenu *windowMenu)

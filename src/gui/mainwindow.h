@@ -273,6 +273,7 @@ private:
     QTimer *m_programUpdateTimer = nullptr;
 #endif
 #ifdef Q_OS_MACOS
+    bool m_hideAfterFullScreenExit = false;
     std::unique_ptr<MacUtils::Badger> m_badger;
     std::unique_ptr<MacUtils::StatusItem> m_statusItem;
 #endif

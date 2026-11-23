@@ -1215,8 +1215,20 @@ void MainWindow::closeEvent(QCloseEvent *e)
 #ifdef Q_OS_MACOS
     if (!m_forceExit)
     {
-        hide();
         e->ignore();
+        if (m_hideAfterFullScreenExit)
+            return;
+
+        if (isFullScreen())
+        {
+            m_hideAfterFullScreenExit = true;
+            if (MacUtils::exitFullScreen(*this))
+                return;
+
+            m_hideAfterFullScreenExit = false;
+        }
+
+        hide();
         return;
     }
 #else
@@ -1295,7 +1307,14 @@ void MainWindow::createTorrentTriggered(const Path &path)
 
 bool MainWindow::event(QEvent *e)
 {
-#ifndef Q_OS_MACOS
+#ifdef Q_OS_MACOS
+    if ((e->type() == QEvent::WindowStateChange) && m_hideAfterFullScreenExit && !isFullScreen())
+    {
+        // Do not hide the window until Cocoa has left the full-screen Space.
+        m_hideAfterFullScreenExit = false;
+        QMetaObject::invokeMethod(this, &QWidget::hide, Qt::QueuedConnection);
+    }
+#else
     switch (e->type())
     {
     case QEvent::WindowStateChange:

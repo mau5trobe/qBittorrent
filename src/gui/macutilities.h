@@ -36,6 +36,7 @@ class QMenu;
 class QPixmap;
 class QSize;
 class QString;
+class QWidget;
 
 namespace MacUtils
 {
@@ -54,4 +55,5 @@ namespace MacUtils
     void setBadgeLabelText(const QString &text);
 
     void setupWindowMenu(QMenu *windowMenu);
+    bool exitFullScreen(QWidget &widget);
 }
