@@ -41,15 +41,27 @@ namespace MacUtils
         : m_impl(std::make_unique<Impl>())
     {
         m_impl->view = [[BadgeView alloc] init];
-        NSApp.dockTile.contentView = m_impl->view;
     }
 
-    Badger::~Badger() = default;
+    Badger::~Badger()
+    {
+        NSDockTile *dockTile = NSApp.dockTile;
+        if (dockTile.contentView == m_impl->view)
+        {
+            dockTile.contentView = nil;
+            [dockTile display];
+        }
+        [m_impl->view release];
+    }
 
     void Badger::updateSpeed(const int64_t dlRate, const int64_t ulRate)
     {
-        // only update if the badged values change
         if ([m_impl->view setRatesWithDownload:dlRate upload:ulRate])
-            [NSApp.dockTile display];
+        {
+            NSDockTile *dockTile = NSApp.dockTile;
+            // Let macOS render the native icon whenever no speed badge is needed.
+            dockTile.contentView = ((dlRate > 0) || (ulRate > 0)) ? m_impl->view : nil;
+            [dockTile display];
+        }
     }
 }

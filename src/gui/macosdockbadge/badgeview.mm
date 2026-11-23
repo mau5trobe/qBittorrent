@@ -60,7 +60,7 @@ static CGSize kArrowSize;
         _fDownloadRate = 0.0;
         _fUploadRate = 0.0;
 
-        NSShadow *stringShadow = [[NSShadow alloc] init];
+        NSShadow *stringShadow = [[[NSShadow alloc] init] autorelease];
         stringShadow.shadowOffset = NSMakeSize(2.0, -2.0);
         stringShadow.shadowBlurRadius = 4.0;
 
@@ -75,6 +75,12 @@ static CGSize kArrowSize;
         kArrowSize = [kDownloadArrow sizeWithAttributes:self.fAttributes];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [_fAttributes release];
+    [super dealloc];
 }
 
 - (BOOL)setRatesWithDownload:(int64_t)downloadRate upload:(int64_t)uploadRate
