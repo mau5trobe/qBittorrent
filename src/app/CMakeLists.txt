@@ -91,21 +91,30 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     )
     # Generate lproj folders for the translations
     foreach(TS_FILE IN LISTS QBT_TS_FILES)
-        string(FIND "${TS_FILE}" "_" POS)
-        math(EXPR START "${POS} + 1")
-        string(SUBSTRING "${TS_FILE}" ${START} -1 LPROJ_FOLDER)
-        string(REPLACE ".ts" ".lproj" LPROJ_FOLDER "${LPROJ_FOLDER}")
-        # @ is not valid as a language code for a lproj folder on MacOS
-        string(REPLACE "@" "-" LPROJ_FOLDER "${LPROJ_FOLDER}")
+        get_filename_component(TS_NAME "${TS_FILE}" NAME_WE)
+        string(REGEX REPLACE "^qbittorrent_" "" LPROJ_LOCALE "${TS_NAME}")
+        # @ is not valid as a language code for an lproj folder on macOS
+        string(REPLACE "@" "-" LPROJ_LOCALE "${LPROJ_LOCALE}")
         add_custom_command(TARGET qbt_app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:qbt_app>/../Resources/${LPROJ_FOLDER}"
+            "$<TARGET_FILE_DIR:qbt_app>/../Resources/${LPROJ_LOCALE}.lproj"
+            VERBATIM
         )
     endforeach()
     # provide variables for substitution in dist/mac/Info.plist
     get_target_property(EXECUTABLE_NAME qbt_app OUTPUT_NAME)
-    # This variable name should be changed once qmake is no longer used. Refer to the discussion in PR #14813
-    set(MACOSX_DEPLOYMENT_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})
+    set(MACOSX_MINIMUM_SYSTEM_VERSION_ENTRY "")
+    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+        # Launch Services expects a three-component version.
+        set(MACOSX_MINIMUM_SYSTEM_VERSION "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+        if (CMAKE_OSX_DEPLOYMENT_TARGET MATCHES "^[0-9]+$")
+            string(APPEND MACOSX_MINIMUM_SYSTEM_VERSION ".0.0")
+        elseif (CMAKE_OSX_DEPLOYMENT_TARGET MATCHES "^[0-9]+\\.[0-9]+$")
+            string(APPEND MACOSX_MINIMUM_SYSTEM_VERSION ".0")
+        endif()
+        set(MACOSX_MINIMUM_SYSTEM_VERSION_ENTRY
+            "\t<key>LSMinimumSystemVersion</key>\n\t<string>${MACOSX_MINIMUM_SYSTEM_VERSION}</string>")
+    endif()
     set_target_properties(qbt_app PROPERTIES
         MACOSX_BUNDLE ON
         MACOSX_BUNDLE_BUNDLE_NAME "qBittorrent"
