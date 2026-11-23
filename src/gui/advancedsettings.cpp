@@ -36,6 +36,11 @@
 #include <QLabel>
 #include <QNetworkInterface>
 
+#ifdef Q_OS_MACOS
+#include <QProxyStyle>
+#include <QScrollBar>
+#endif
+
 #include <libtorrent/version.hpp>
 
 #include "base/bittorrent/session.h"
@@ -48,6 +53,23 @@
 
 namespace
 {
+#ifdef Q_OS_MACOS
+    class NonOverlappingScrollBarStyle final : public QProxyStyle
+    {
+    public:
+        using QProxyStyle::QProxyStyle;
+
+        int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const override
+        {
+            // Keep the native transient scrollbar, but reserve space for it.
+            if (metric == PM_ScrollView_ScrollBarOverlap)
+                return 0;
+
+            return QProxyStyle::pixelMetric(metric, option, widget);
+        }
+    };
+#endif
+
     QString makeLink(const QStringView url, const QStringView linkLabel)
     {
          return u"<a href=\"%1\">%2</a>"_s.arg(url, linkLabel);
@@ -214,6 +236,16 @@ AdvancedSettings::AdvancedSettings(IGUIApplication *app, QWidget *parent)
     setAlternatingRowColors(true);
     setSelectionMode(QAbstractItemView::NoSelection);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
+#ifdef Q_OS_MACOS
+    QScrollBar *scrollBar = verticalScrollBar();
+    const QString styleName = scrollBar->style()->name();
+    if (styleName == u"macos")
+    {
+        auto *scrollBarStyle = new NonOverlappingScrollBarStyle(styleName);
+        scrollBarStyle->setParent(scrollBar);
+        scrollBar->setStyle(scrollBarStyle);
+    }
+#endif
     // Load settings
     loadAdvancedSettings();
     resizeColumnToContents(0);
