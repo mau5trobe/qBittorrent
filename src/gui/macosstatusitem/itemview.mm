@@ -57,7 +57,7 @@ namespace
         self.fUploadRate = 0.0;
 
         NSString *iconPath = [NSBundle.mainBundle pathForResource:@"qbittorrent-tray-light" ofType:@"svg"];
-        NSImage *icon = [[NSImage alloc] initWithContentsOfFile:iconPath];
+        NSImage *icon = [[[NSImage alloc] initWithContentsOfFile:iconPath] autorelease];
         [icon setSize:NSMakeSize(16, 16)];
         [icon setTemplate:YES];
 
@@ -68,7 +68,7 @@ namespace
         self.statusItem.button.toolTip = @"qBittorrent";
         self.statusItem.button.title = @"";
 
-        self.statusMenu = [[NSMenu alloc] init];
+        self.statusMenu = [[[NSMenu alloc] init] autorelease];
 
         const QString uploadString = Utils::Misc::friendlyUnit(self.fUploadRate, true);
         const QString downloadString = Utils::Misc::friendlyUnit(self.fDownloadRate, true);
@@ -76,9 +76,9 @@ namespace
         NSString *uploadNSString = uploadString.toNSString();
         NSString *downloadNSString = downloadString.toNSString();
 
-        self.statusStatsItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ %@ · %@ %@",
+        self.statusStatsItem = [[[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ %@ · %@ %@",
                                                                   kDownloadArrow, downloadNSString,
-                                                                  kUploadArrow, uploadNSString] action:nil keyEquivalent:@""];
+                                                                  kUploadArrow, uploadNSString] action:nil keyEquivalent:@""] autorelease];
         self.statusStatsItem.action = nil;
         self.statusStatsItem.target = nil;
         [self.statusMenu addItem:self.statusStatsItem];
@@ -87,6 +87,16 @@ namespace
         self.statusItem.menu = self.statusMenu;
     }
     return self;
+}
+
+- (void)dealloc
+{
+    if (_statusItem)
+        [[NSStatusBar systemStatusBar] removeStatusItem:_statusItem];
+    [_statusItem release];
+    [_statusMenu release];
+    [_statusStatsItem release];
+    [super dealloc];
 }
 
 - (BOOL)setRatesWithDownload:(int64_t)downloadRate upload:(int64_t)uploadRate

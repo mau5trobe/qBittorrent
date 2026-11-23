@@ -43,7 +43,10 @@ namespace MacUtils
         m_impl->itemView = [[ItemView alloc] init];
     }
 
-    StatusItem::~StatusItem() = default;
+    StatusItem::~StatusItem()
+    {
+        [m_impl->itemView release];
+    }
 
     void StatusItem::updateSpeed(const int64_t downloadRate, const int64_t uploadRate)
     {
