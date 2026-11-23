@@ -111,7 +111,7 @@ namespace MacUtils
     {
         @autoreleasepool
         {
-            UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+            UNMutableNotificationContent *content = [[[UNMutableNotificationContent alloc] init] autorelease];
             content.title = title.toNSString();
             content.body = message.toNSString();
             content.sound = [UNNotificationSound defaultSound];
