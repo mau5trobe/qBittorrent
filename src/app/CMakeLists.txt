@@ -80,11 +80,47 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     include(FindQtTranslations)
     qbt_get_qt_translations(QT_TRANSLATIONS)
     set_source_files_properties(${QT_TRANSLATIONS} PROPERTIES MACOSX_PACKAGE_LOCATION translations)
+
+    set(APP_ICON_FILE "qbittorrent_mac.icns")
+    set(APP_ICON_NAME_ENTRY "")
+    set(APP_ICON_RESOURCES "${qBittorrent_SOURCE_DIR}/dist/mac/${APP_ICON_FILE}")
+    if (GUI)
+        set(APP_ICON_SDK "${CMAKE_OSX_SYSROOT}")
+        if (NOT APP_ICON_SDK)
+            set(APP_ICON_SDK macosx)
+        endif()
+        execute_process(COMMAND xcrun --no-cache --sdk "${APP_ICON_SDK}" --show-sdk-version
+            OUTPUT_VARIABLE APP_ICON_SDK_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        # Icon Composer assets require Xcode 26 or newer. Keep the legacy icon for older SDKs.
+        if (APP_ICON_SDK_VERSION VERSION_GREATER_EQUAL "26.0")
+            set(APP_ICON_SOURCE "${qBittorrent_SOURCE_DIR}/dist/mac/AppIcon.icon")
+            set(APP_ICON_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/AppIcon")
+            set(APP_ICON_FILE "AppIcon.icns")
+            set(APP_ICON_NAME_ENTRY "\t<key>CFBundleIconName</key>\n\t<string>AppIcon</string>")
+            set(APP_ICON_RESOURCES "${APP_ICON_OUTPUT_DIR}/Assets.car" "${APP_ICON_OUTPUT_DIR}/${APP_ICON_FILE}")
+            set(APP_ICON_DEPLOYMENT_TARGET "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+            if (NOT APP_ICON_DEPLOYMENT_TARGET)
+                set(APP_ICON_DEPLOYMENT_TARGET "${APP_ICON_SDK_VERSION}")
+            endif()
+            file(GLOB APP_ICON_LAYERS CONFIGURE_DEPENDS "${APP_ICON_SOURCE}/Assets/*")
+            add_custom_command(OUTPUT ${APP_ICON_RESOURCES}
+                BYPRODUCTS "${APP_ICON_OUTPUT_DIR}/Info.plist"
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${APP_ICON_OUTPUT_DIR}"
+                COMMAND xcrun --no-cache --sdk "${APP_ICON_SDK}" actool
+                    --compile "${APP_ICON_OUTPUT_DIR}" --platform macosx
+                    --minimum-deployment-target "${APP_ICON_DEPLOYMENT_TARGET}"
+                    --app-icon AppIcon --output-partial-info-plist "${APP_ICON_OUTPUT_DIR}/Info.plist"
+                    "${APP_ICON_SOURCE}"
+                DEPENDS "${APP_ICON_SOURCE}/icon.json" ${APP_ICON_LAYERS}
+                VERBATIM)
+        endif()
+    endif()
+
     set_source_files_properties(
         "${qBittorrent_SOURCE_DIR}/dist/mac/qt.conf"
         "${qBittorrent_SOURCE_DIR}/dist/mac/qBitTorrentDocument.icns"
         "${qBittorrent_SOURCE_DIR}/dist/mac/qBitTorrentIncompleteData.icns"
-        "${qBittorrent_SOURCE_DIR}/dist/mac/qbittorrent_mac.icns"
+        ${APP_ICON_RESOURCES}
         "${qBittorrent_SOURCE_DIR}/src/icons/qbittorrent-tray-light.svg"
             PROPERTIES
                 MACOSX_PACKAGE_LOCATION Resources
@@ -125,7 +161,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         ${qBittorrent_SOURCE_DIR}/dist/mac/qt.conf
         ${qBittorrent_SOURCE_DIR}/dist/mac/qBitTorrentDocument.icns
         ${qBittorrent_SOURCE_DIR}/dist/mac/qBitTorrentIncompleteData.icns
-        ${qBittorrent_SOURCE_DIR}/dist/mac/qbittorrent_mac.icns
+        ${APP_ICON_RESOURCES}
         ${qBittorrent_SOURCE_DIR}/src/icons/qbittorrent-tray-light.svg
     )
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")

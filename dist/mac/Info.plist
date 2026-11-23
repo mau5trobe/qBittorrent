@@ -73,7 +73,8 @@
 	<key>CFBundleName</key>
 	<string>qBittorrent</string>
 	<key>CFBundleIconFile</key>
-	<string>qbittorrent_mac.icns</string>
+	<string>${APP_ICON_FILE}</string>
+${APP_ICON_NAME_ENTRY}
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
