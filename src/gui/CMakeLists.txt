@@ -322,6 +322,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         programupdater.h
     )
     target_link_libraries(qbt_gui PRIVATE
+        # Let macdeployqt find the framework used by the SVG plugins.
+        Qt::Svg
         objc
         "-framework UserNotifications"
     )
